@@ -113,7 +113,7 @@ bool Storage::writeToFile(void) {
 
 
     while(1) {
-      meetingStream << *it++;
+      meetingStream << *it;
 
       if (it == participators.end()) {
         meetingStream << "\",";
@@ -121,6 +121,7 @@ bool Storage::writeToFile(void) {
       }
 
       meetingStream << "&";
+      it++;
     }
 
     meetingStream << "\"" << Date::dateToString(meeting.getStartDate())
