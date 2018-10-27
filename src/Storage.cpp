@@ -1,6 +1,6 @@
 #include "Storage.hpp"
 #include <fstream>  // ifstream ostream
-#include <regex>  // reges expression
+#include <regex>    // reges expression
 #include "Path.hpp"
 
 using std::function;
@@ -10,13 +10,13 @@ using std::string;
 std::shared_ptr<Storage> Storage::m_instance = nullptr;
 
 /**
- *   default constructor
+ *  default constructor
  */
 Storage::Storage() : m_dirty(false) { this->readFromFile(); }
 
 /**
- *   read file content into memory
- *   @return if success, true will be returned
+ * read file content into memory
+ * @return if success, true will be returned
  */
 bool Storage::readFromFile(void) {
   std::ifstream userStream(Path::userPath);
@@ -56,18 +56,18 @@ bool Storage::readFromFile(void) {
 
     t_meeting.setSponsor(result[1]);
 
-    string paticipators = result[2];
+    string participators = result[2];
     std::vector<string> t_participators;
     size_t pos = 0;
     string delimiter = "&";
-    string participator;
 
     // Split a string using delimiter
-    while ((pos = paticipators.find(delimiter)) != string::npos) {
-      t_participators.push_back(paticipators.substr(0, pos));
-      paticipators.erase(0, pos + delimiter.length());
+    while ((pos = participators.find(delimiter)) != string::npos) {
+      t_participators.push_back(participators.substr(0, pos));
+      participators.erase(0, pos + delimiter.length());
     }
 
+    t_participators.push_back(participators);
     t_meeting.setParticipator(t_participators);
     t_meeting.setStartDate(Date::stringToDate(string(result[3])));
     t_meeting.setEndDate(Date::stringToDate(string(result[4])));
@@ -82,8 +82,30 @@ bool Storage::readFromFile(void) {
 }
 
 /**
- *   write file content from memory
- *   @return if success, true will be returned
+ * convert the participators list to string
+ * @param the source participators list
+ * @return the result string
+ */
+string vectorToString(const std::vector<string> &participators) {
+  string result = "";
+  bool isFirstItem = true;
+
+  for (auto it = participators.begin(); it != participators.end(); it++) {
+    if (isFirstItem) {
+      isFirstItem = false;
+    } else {
+      result += "&";
+    }
+
+    result += *it;
+  }
+
+  return result;
+}
+
+/**
+ * write file content from memory
+ * @return if success, true will be returned
  */
 bool Storage::writeToFile(void) {
   std::ofstream userStream(Path::userPath);
@@ -105,25 +127,7 @@ bool Storage::writeToFile(void) {
 
   for (const Meeting &meeting : this->m_meetingList) {
     meetingStream << "\"" << meeting.getSponsor() << "\",";
-
-    std::vector<string> participators = meeting.getParticipator();
-    std::vector<string>::iterator it = participators.begin();
-
-    meetingStream << "\"";
-
-
-    while(1) {
-      meetingStream << *it;
-
-      if (it == participators.end()) {
-        meetingStream << "\",";
-        break;
-      }
-
-      meetingStream << "&";
-      it++;
-    }
-
+    meetingStream << "\"" << vectorToString(meeting.getParticipator()) << "\",";
     meetingStream << "\"" << Date::dateToString(meeting.getStartDate())
                   << "\",";
     meetingStream << "\"" << Date::dateToString(meeting.getEndDate()) << "\",";
@@ -132,6 +136,8 @@ bool Storage::writeToFile(void) {
 
   meetingStream.close();
 
+  this->m_dirty = false;
+  
   return true;
 }
 
@@ -147,9 +153,11 @@ std::shared_ptr<Storage> Storage::getInstance(void) {
 }
 
 /**
- *   destructor
+ * destructor
  */
-Storage::~Storage() { this->sync(); }
+Storage::~Storage() {
+  if (this->m_dirty) this->writeToFile();
+}
 
 /**
  * create a user
@@ -281,10 +289,4 @@ int Storage::deleteMeeting(function<bool(const Meeting &)> filter) {
 /**
  * sync with the file
  */
-bool Storage::sync(void) {
-  if (this->m_dirty && !this->writeToFile()) return false;
-
-  this->m_dirty = false;
-
-  return true;
-}
+bool Storage::sync(void) { return this->writeToFile(); }
