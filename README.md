@@ -6,6 +6,20 @@
 
 - Wiki: [https://wiki.vmatrix.org.cn](https://wiki.vmatrix.org.cn)
 
+## Folder Structure
+
+```
+.
+├── bin       # Output executables
+├── build     # Object files to be used by GTest
+├── data      # CSV files
+├── gtest     # GTest files to test your code
+├── include   # Header files
+├── src       # Source files
+├── Makefile
+└── ...
+```
+
 ## Build Setup
 
 ### Install GTest
