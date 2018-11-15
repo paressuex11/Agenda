@@ -33,9 +33,7 @@ bool Storage::readFromFile(void) {
   std::regex userCSVPattern("^\"(.+)\",\"(.+)\",\"(.+)\",\"(.+)\"$");
 
   for (string line; std::getline(userStream, line);) {
-    if (!std::regex_match(line, result, userCSVPattern)) {
-      return false;
-    }
+    if (!std::regex_match(line, result, userCSVPattern)) return false;
 
     this->m_userList.push_back(
         User(result[1], result[2], result[3], result[4]));
@@ -48,9 +46,7 @@ bool Storage::readFromFile(void) {
       "^\"(.+)\",\"(.+)\",\"(.+)\",\"(.+)\",\"(.+)\"$");
 
   for (string line; std::getline(meetingStream, line);) {
-    if (!std::regex_match(line, result, meetingCSVPattern)) {
-      return false;
-    }
+    if (!std::regex_match(line, result, meetingCSVPattern)) return false;
 
     Meeting t_meeting;
 
@@ -137,7 +133,7 @@ bool Storage::writeToFile(void) {
   meetingStream.close();
 
   this->m_dirty = false;
-  
+
   return true;
 }
 

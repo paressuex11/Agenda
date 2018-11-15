@@ -47,6 +47,7 @@ bool AgendaService::userRegister(const string &userName, const string &password,
   if (!this->m_storage->queryUser(filter).empty()) return false;
 
   this->m_storage->createUser(User(userName, password, email, phone));
+
   return true;
 }
 
@@ -71,6 +72,7 @@ bool AgendaService::deleteUser(const string &userName, const string &password) {
   this->m_storage->deleteMeeting([&userName](const Meeting &m) -> bool {
     return m.getSponsor() == userName || m.getParticipator().empty();
   });
+
   return true;
 }
 
@@ -101,9 +103,8 @@ bool AgendaService::createMeeting(const string &userName, const string &title,
   Date eDate = Date::stringToDate(endDate);
 
   // check if dates valid
-  if (!Date::isValid(sDate) || !Date::isValid(eDate) || sDate >= eDate) {
+  if (!Date::isValid(sDate) || !Date::isValid(eDate) || sDate >= eDate)
     return false;
-  }
 
   auto filterSponsorExist = [&userName](const User &u) -> bool {
     return u.getName() == userName;
@@ -165,6 +166,7 @@ bool AgendaService::createMeeting(const string &userName, const string &title,
 
   this->m_storage->createMeeting(
       Meeting(userName, (participator), startDate, endDate, title));
+
   return true;
 }
 
@@ -216,6 +218,7 @@ bool AgendaService::addMeetingParticipator(const std::string &userName,
         return m.getTitle() == meeting.getTitle();
       },
       [&participator](Meeting &m) { m.addParticipator(participator); });
+
   return true;
 }
 
@@ -257,6 +260,7 @@ bool AgendaService::removeMeetingParticipator(const std::string &userName,
   this->m_storage->deleteMeeting([&meeting](const Meeting &m) {
     return m.getParticipator().empty() && m.getTitle() == meeting.getTitle();
   });
+
   return true;
 }
 
@@ -287,6 +291,7 @@ bool AgendaService::quitMeeting(const std::string &userName,
   this->m_storage->deleteMeeting([&meeting](const Meeting &m) -> bool {
     return m.getParticipator().empty() && m.getTitle() == meeting.getTitle();
   });
+
   return true;
 }
 
@@ -321,9 +326,8 @@ list<Meeting> AgendaService::meetingQuery(const string &userName,
 
   list<Meeting> listMeeting;
 
-  if (!Date::isValid(sDate) || !Date::isValid(eDate) || sDate > eDate) {
+  if (!Date::isValid(sDate) || !Date::isValid(eDate) || sDate > eDate)
     return listMeeting;
-  }
 
   auto filter = [&userName, &sDate, &eDate](const Meeting &m) -> bool {
     return !(eDate < m.getStartDate() || sDate > m.getEndDate()) &&

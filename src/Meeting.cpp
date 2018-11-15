@@ -69,9 +69,7 @@ void Meeting::removeParticipator(const std::string &t_participator) {
       find(this->m_participators.begin(), this->m_participators.end(),
            t_participator);
 
-  if (it != this->m_participators.end()) {
-    this->m_participators.erase(it);
-  }
+  if (it != this->m_participators.end()) this->m_participators.erase(it);
 }
 
 /**
