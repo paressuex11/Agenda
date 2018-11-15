@@ -192,19 +192,14 @@ Date &Date::operator=(const Date &t_date) {
  * @brief check whether the CurrentDate is equal to the t_date
  */
 bool Date::operator==(const Date &t_date) const {
-  return this->m_year == t_date.m_year && this->m_month == t_date.m_month &&
-         this->m_day == t_date.m_day && this->m_hour == t_date.m_hour &&
-         this->m_minute == t_date.m_minute;
+  return Date::dateToString(*this) == Date::dateToString(t_date);
 }
 
 /**
  * @brief check whether the CurrentDate is  greater than the t_date
  */
 bool Date::operator>(const Date &t_date) const {
-  return vector<int>{this->m_year, this->m_month, this->m_day, this->m_hour,
-                     this->m_minute} >
-         vector<int>{t_date.m_year, t_date.m_month, t_date.m_day, t_date.m_hour,
-                     t_date.m_minute};
+  return Date::dateToString(*this) > Date::dateToString(t_date);
 }
 
 /**
