@@ -1,6 +1,6 @@
 # Agenda
 
-> 中山大学软件工程初级实训
+> 中山大学 2017 级软件工程 初级实训项目
 
 ## Resources
 
@@ -52,3 +52,7 @@ sudo cp *.a /usr/lib
 make clean
 make
 ```
+
+## Notes
+
+- When you are running `test.sh` or compiling on `v0.1.0` tag, due to the lack of header file and implementation of `AgendaUI` , it will throw an `undefined reference to 'main'` error. However, it has no impact on the testing result.
