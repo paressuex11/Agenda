@@ -27,6 +27,6 @@ static-analyze:
 
 clean:
 	@echo " Cleaning... "
-	@echo " rm -rf $(BUILDDIR) $(TARGET)"; rm -rf $(BUILDDIR) $(TARGET)
+	@echo " rm -rf $(BUILDDIR)/* $(TARGET)"; rm -rf $(BUILDDIR)/* $(TARGET)
 
 .PHONY: clean
