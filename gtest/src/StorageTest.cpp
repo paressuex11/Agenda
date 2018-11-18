@@ -213,18 +213,18 @@ class StoragePrivateTest : public StorageTest {
 /*
  *  If no data files to read, then create empty lists
  */
-TEST_F(StoragePrivateTest, NoFileToRead) {
-  storage->m_instance.reset();
-  ASSERT_EQ(1, storage.use_count());
-  storage.reset();
-  std::remove(userPath);
-  std::remove(meetingPath);
-  storage = Storage::getInstance();
-  EXPECT_TRUE(storage->queryUser(getAllUser).empty());
-  EXPECT_TRUE(storage->queryMeeting(getAllMeeting).empty());
-  storage->m_instance.reset();
-  storage.reset();
-}
+// TEST_F(StoragePrivateTest, NoFileToRead) {
+//     storage->m_instance.reset();
+//     ASSERT_EQ(1, storage.use_count());
+//     storage.reset();
+//     std::remove(userPath);
+//     std::remove(meetingPath);
+//     storage = Storage::getInstance();
+//     EXPECT_TRUE(storage->queryUser(getAllUser).empty());
+//     EXPECT_TRUE(storage->queryMeeting(getAllMeeting).empty());
+//     storage->m_instance.reset();
+//     storage.reset();
+// }
 
 /*
  *  Test destrutor and if the files are written correctly

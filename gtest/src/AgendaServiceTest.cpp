@@ -1,6 +1,7 @@
 #define GTEST
 #include <gtest/gtest.h>
 #include <fstream>
+#include <iostream>
 #include <list>
 #include <string>
 #include <vector>
@@ -53,6 +54,42 @@ class AgendaServiceTest : public ::testing::Test {
         << "i = " << i << "\nSponsor: " << meetingSamples[i].getSponsor()
         << "\nTitle: " << meetingSamples[i].getTitle()
         << "\nstartDate: " << startDate << "\nendData: " << endDate;
+  }
+  void invalidAddMeetingParticipatorTest(int i, const string &part) {
+    EXPECT_FALSE(service->addMeetingParticipator(
+        meetingSamples[i].getSponsor(), meetingSamples[i].getTitle(), part))
+        << "Participator: " << part << "\ni = " << i
+        << "\nSponsor: " << meetingSamples[i].getSponsor()
+        << "\nTitle: " << meetingSamples[i].getTitle() << "\nstartDate: "
+        << Date::dateToString(meetingSamples[i].getStartDate())
+        << "\nendDate: " << Date::dateToString(meetingSamples[i].getEndDate());
+  }
+  void validAddMeetingParticipatorTest(int i, const string &part) {
+    EXPECT_TRUE(service->addMeetingParticipator(
+        meetingSamples[i].getSponsor(), meetingSamples[i].getTitle(), part))
+        << "Participator: " << part << "\ni = " << i
+        << "\nSponsor: " << meetingSamples[i].getSponsor()
+        << "\nTitle: " << meetingSamples[i].getTitle() << "\nstartDate: "
+        << Date::dateToString(meetingSamples[i].getStartDate())
+        << "\nendDate: " << Date::dateToString(meetingSamples[i].getEndDate());
+  }
+  void invalidRemoveMeetingParticipatorTest(int i, const string &part) {
+    EXPECT_FALSE(service->removeMeetingParticipator(
+        meetingSamples[i].getSponsor(), meetingSamples[i].getTitle(), part))
+        << "Participator: " << part << "\ni = " << i
+        << "\nSponsor: " << meetingSamples[i].getSponsor()
+        << "\nTitle: " << meetingSamples[i].getTitle() << "\nstartDate: "
+        << Date::dateToString(meetingSamples[i].getStartDate())
+        << "\nendDate: " << Date::dateToString(meetingSamples[i].getEndDate());
+  }
+  void validRemoveMeetingParticipatorTest(int i, const string &part) {
+    EXPECT_TRUE(service->removeMeetingParticipator(
+        meetingSamples[i].getSponsor(), meetingSamples[i].getTitle(), part))
+        << "Participator: " << part << "\ni = " << i
+        << "\nSponsor: " << meetingSamples[i].getSponsor()
+        << "\nTitle: " << meetingSamples[i].getTitle() << "\nstartDate: "
+        << Date::dateToString(meetingSamples[i].getStartDate())
+        << "\nendDate: " << Date::dateToString(meetingSamples[i].getEndDate());
   }
   static AgendaService *service;
   //  user1-user3 and meeting1, meeting2 are default configuration for the test
@@ -163,15 +200,24 @@ TEST_F(AgendaServiceTest, CreateMeeting) {
       meeting3.getSponsor(), meeting3.getTitle(),
       Date::dateToString(meeting3.getStartDate()),
       Date::dateToString(meeting3.getEndDate()), meeting3.getParticipator()));
-  //  Invalid start date string
+  //  Invalid start date string (format)
   EXPECT_FALSE(service->createMeeting(
       meeting5.getSponsor(), meeting5.getTitle(), "2019-7-10/15:00",
       Date::dateToString(meeting5.getEndDate()), meeting5.getParticipator()));
-  //  Invalid end date string
+  //  Invalid end date string (format)
   EXPECT_FALSE(
       service->createMeeting(meeting5.getSponsor(), meeting5.getTitle(),
                              Date::dateToString(meeting5.getStartDate()),
                              "2019-07-11/19:0", meeting5.getParticipator()));
+  //  Invalid start date string (logic)
+  EXPECT_FALSE(service->createMeeting(
+      meeting5.getSponsor(), meeting5.getTitle(), "1900-02-29/15:00",
+      Date::dateToString(meeting5.getEndDate()), meeting5.getParticipator()));
+  //  Invalid end date string (logic)
+  EXPECT_FALSE(
+      service->createMeeting(meeting5.getSponsor(), meeting5.getTitle(),
+                             Date::dateToString(meeting5.getStartDate()),
+                             "2100-02-29/19:00", meeting5.getParticipator()));
   //  Start date is later than end date
   EXPECT_FALSE(
       service->createMeeting(meeting5.getSponsor(), meeting5.getTitle(),
@@ -222,7 +268,6 @@ TEST_F(AgendaServiceTest, CreateMeetingDateIssues) {
   // current meeting interval                 |---|
   // sponsor's meeting interval             |-----|
   invalidMeetingIntervalTest(5, "2019-07-11/17:25", "2019-07-11/19:00");
-
   // current meeting interval               |-----|
   // sponsor's meeting interval             |-----|
   invalidMeetingIntervalTest(5, "2019-07-11/17:21", "2019-07-11/19:00");
@@ -410,6 +455,244 @@ TEST_F(AgendaServiceTest, CreateMeetingDateIssues) {
 }
 
 /*
+ *  Test addMeetingParticipator() and removeMeetingParticipator()
+ */
+TEST_F(AgendaServiceTest, addAndRemoveMeetingParticipator) {
+  ASSERT_TRUE(service->userRegister(user4.getName(), user4.getPassword(),
+                                    user4.getEmail(), user4.getPhone()));
+  ASSERT_TRUE(service->createMeeting(
+      meeting1.getSponsor(), meeting1.getTitle(),
+      Date::dateToString(meeting1.getStartDate()),
+      Date::dateToString(meeting1.getEndDate()), meeting1.getParticipator()));
+
+  // no such meeting
+  invalidAddMeetingParticipatorTest(3, "Trevor");
+  invalidRemoveMeetingParticipatorTest(3, "Trevor");
+
+  // test add sponsor
+  invalidAddMeetingParticipatorTest(0, "Naked Snake");
+
+  validAddMeetingParticipatorTest(0, "Trevor");
+
+  // test add again
+  invalidAddMeetingParticipatorTest(0, "Trevor");
+  // no such user
+  invalidAddMeetingParticipatorTest(0, "LLLL");
+
+  // remove the participator
+  validRemoveMeetingParticipatorTest(0, "Trevor");
+  // test remove again
+  invalidRemoveMeetingParticipatorTest(0, "Trevor");
+  // check if already removed
+  auto meetings = service->listAllMeetings("Trevor");
+  EXPECT_TRUE(meetings.empty());
+
+  // remove the last participator
+  validRemoveMeetingParticipatorTest(0, "Lara Croft");
+  // check if the meeting already deleted
+  meetings = service->listAllMeetings("Naked Snake");
+  ASSERT_TRUE(meetings.empty());
+
+  invalidRemoveMeetingParticipatorTest(0, "Trevor");
+  ASSERT_TRUE(service->deleteUser(user4.getName(), user4.getPassword()));
+  // no need to delete because when the last participator is removed, the
+  // meeting will be deleted
+
+  // ASSERT_TRUE(service->deleteMeeting(meeting1.getSponsor(),
+  // meeting1.getTitle()));
+}
+
+/*
+ *  Test deleteUser side effect
+ */
+TEST_F(AgendaServiceTest, deleteUserSideEffect) {
+  ASSERT_TRUE(service->userRegister(user4.getName(), user4.getPassword(),
+                                    user4.getEmail(), user4.getPhone()));
+  ASSERT_TRUE(service->createMeeting(
+      meeting1.getSponsor(), meeting1.getTitle(),
+      Date::dateToString(meeting1.getStartDate()),
+      Date::dateToString(meeting1.getEndDate()), meeting1.getParticipator()));
+
+  validAddMeetingParticipatorTest(0, "Trevor");
+  auto meeting =
+      service->meetingQuery(meeting1.getSponsor(), meeting1.getTitle()).front();
+  // 2 participators. Trevor and Lara
+  EXPECT_TRUE(meeting.getParticipator().size() == 2);
+
+  ASSERT_TRUE(service->deleteUser(user4.getName(), user4.getPassword()));
+  meeting =
+      service->meetingQuery(meeting1.getSponsor(), meeting1.getTitle()).front();
+  // side effect -- remove participator. Trevor will be removed
+  EXPECT_TRUE(meeting.getParticipator().size() == 1);
+
+  // register again
+  ASSERT_TRUE(service->userRegister(user4.getName(), user4.getPassword(),
+                                    user4.getEmail(), user4.getPhone()));
+  // add again
+  validAddMeetingParticipatorTest(0, "Trevor");
+  validRemoveMeetingParticipatorTest(0, "Lara Croft");
+  ASSERT_TRUE(service->deleteUser(user4.getName(), user4.getPassword()));
+  // side effect -- removing participator results in meeting being deleted.
+  // Meeting will be deleted
+  ASSERT_TRUE(service->meetingQuery(meeting1.getSponsor(), meeting1.getTitle())
+                  .empty());
+
+  // register again
+  ASSERT_TRUE(service->userRegister(user4.getName(), user4.getPassword(),
+                                    user4.getEmail(), user4.getPhone()));
+  ASSERT_TRUE(service->createMeeting(
+      meeting4.getSponsor(), meeting4.getTitle(),
+      Date::dateToString(meeting4.getStartDate()),
+      Date::dateToString(meeting4.getEndDate()), meeting4.getParticipator()));
+  // side effect -- deleting sponsor results in meeting being deleted. Meeting
+  // will be deleted
+  ASSERT_FALSE(service->meetingQuery(meeting4.getSponsor(), meeting4.getTitle())
+                   .empty());
+  ASSERT_TRUE(service->deleteUser(user4.getName(), user4.getPassword()));
+  ASSERT_TRUE(service->meetingQuery(meeting4.getSponsor(), meeting4.getTitle())
+                  .empty());
+}
+
+/*
+ *  Test addMeetingParticipator() Date Issues
+ */
+TEST_F(AgendaServiceTest, addMeetingParticipatorDateIssues) {
+  ASSERT_TRUE(service->createMeeting(
+      meeting1.getSponsor(), meeting1.getTitle(),
+      Date::dateToString(meeting1.getStartDate()),
+      Date::dateToString(meeting1.getEndDate()), meeting1.getParticipator()));
+
+  ASSERT_TRUE(service->userRegister(user4.getName(), user4.getPassword(),
+                                    user4.getEmail(), user4.getPhone()));
+  // Participator (Trevor) is busy
+  // participator's current interval    |-----|
+  // participator's to add interval         |-----|
+  ASSERT_TRUE(service->createMeeting(meeting4.getSponsor(), meeting4.getTitle(),
+                                     "2016-07-08/11:00", "2016-07-08/12:00",
+                                     meeting4.getParticipator()));
+  invalidAddMeetingParticipatorTest(0, "Trevor");
+  ASSERT_TRUE(
+      service->deleteMeeting(meeting4.getSponsor(), meeting4.getTitle()));
+
+  // participator's current interval        |---|
+  // participator's to add interval         |-----|
+  ASSERT_TRUE(service->createMeeting(meeting4.getSponsor(), meeting4.getTitle(),
+                                     "2016-07-08/11:10", "2016-07-08/12:00",
+                                     meeting4.getParticipator()));
+  invalidAddMeetingParticipatorTest(0, "Trevor");
+  ASSERT_TRUE(
+      service->deleteMeeting(meeting4.getSponsor(), meeting4.getTitle()));
+
+  // participator's current interval         |---|
+  // participator's to add interval         |-----|
+  ASSERT_TRUE(service->createMeeting(meeting4.getSponsor(), meeting4.getTitle(),
+                                     "2016-07-08/11:25", "2016-07-08/12:00",
+                                     meeting4.getParticipator()));
+  invalidAddMeetingParticipatorTest(0, "Trevor");
+  ASSERT_TRUE(
+      service->deleteMeeting(meeting4.getSponsor(), meeting4.getTitle()));
+
+  // participator's current interval          |---|
+  // participator's to add interval         |-----|
+  ASSERT_TRUE(service->createMeeting(meeting4.getSponsor(), meeting4.getTitle(),
+                                     "2016-07-08/11:25", "2016-07-08/12:05",
+                                     meeting4.getParticipator()));
+  invalidAddMeetingParticipatorTest(0, "Trevor");
+  ASSERT_TRUE(
+      service->deleteMeeting(meeting4.getSponsor(), meeting4.getTitle()));
+
+  // participator's current interval        |-----|
+  // participator's to add interval         |-----|
+  ASSERT_TRUE(service->createMeeting(meeting4.getSponsor(), meeting4.getTitle(),
+                                     "2016-07-08/11:10", "2016-07-08/12:05",
+                                     meeting4.getParticipator()));
+  invalidAddMeetingParticipatorTest(0, "Trevor");
+  ASSERT_TRUE(
+      service->deleteMeeting(meeting4.getSponsor(), meeting4.getTitle()));
+
+  // participator's current interval          |-----|
+  // participator's to add interval         |-----|
+  ASSERT_TRUE(service->createMeeting(meeting4.getSponsor(), meeting4.getTitle(),
+                                     "2016-07-08/11:25", "2016-07-08/12:10",
+                                     meeting4.getParticipator()));
+  invalidAddMeetingParticipatorTest(0, "Trevor");
+  ASSERT_TRUE(
+      service->deleteMeeting(meeting4.getSponsor(), meeting4.getTitle()));
+
+  // participator's current interval       |-------|
+  // participator's to add interval         |-----|
+  ASSERT_TRUE(service->createMeeting(meeting4.getSponsor(), meeting4.getTitle(),
+                                     "2016-07-08/11:00", "2016-07-08/12:10",
+                                     meeting4.getParticipator()));
+  invalidAddMeetingParticipatorTest(0, "Trevor");
+  ASSERT_TRUE(
+      service->deleteMeeting(meeting4.getSponsor(), meeting4.getTitle()));
+
+  // participator's current interval  |-----|
+  // participator's to add interval         |-----|
+  ASSERT_TRUE(service->createMeeting(meeting4.getSponsor(), meeting4.getTitle(),
+                                     "2016-07-08/11:00", "2016-07-08/11:10",
+                                     meeting4.getParticipator()));
+  validAddMeetingParticipatorTest(0, "Trevor");
+  validRemoveMeetingParticipatorTest(0, "Trevor");
+  ASSERT_TRUE(
+      service->deleteMeeting(meeting4.getSponsor(), meeting4.getTitle()));
+
+  // participator's current interval              |-----|
+  // participator's to add interval         |-----|
+  ASSERT_TRUE(service->createMeeting(meeting4.getSponsor(), meeting4.getTitle(),
+                                     "2016-07-08/12:05", "2016-07-08/12:10",
+                                     meeting4.getParticipator()));
+  validAddMeetingParticipatorTest(0, "Trevor");
+  validRemoveMeetingParticipatorTest(0, "Trevor");
+  ASSERT_TRUE(
+      service->deleteMeeting(meeting4.getSponsor(), meeting4.getTitle()));
+
+  ASSERT_TRUE(service->deleteUser(user4.getName(), user4.getPassword()));
+
+  ASSERT_TRUE(
+      service->deleteMeeting(meeting1.getSponsor(), meeting1.getTitle()));
+}
+
+/*
+ *  Test quitMeeting() method
+ */
+TEST_F(AgendaServiceTest, QuitMeeting) {
+  ASSERT_TRUE(service->createMeeting(
+      meeting2.getSponsor(), meeting2.getTitle(),
+      Date::dateToString(meeting2.getStartDate()),
+      Date::dateToString(meeting2.getEndDate()), meeting2.getParticipator()));
+
+  auto meetings = service->listAllMeetings("Lara Croft");
+  ASSERT_FALSE(meetings.empty());
+
+  // no such meeting
+  EXPECT_FALSE(service->quitMeeting("Trevor", "Test"));
+
+  // as the sponsor, sponsor can not quit the meeting
+  EXPECT_FALSE(
+      service->quitMeeting(meeting2.getSponsor(), meeting2.getTitle()));
+
+  // no such participator
+  EXPECT_FALSE(service->quitMeeting("Trevor", meeting2.getTitle()));
+
+  // success
+  EXPECT_TRUE(service->quitMeeting("Lara Croft", meeting2.getTitle()));
+  meetings = service->listAllMeetings("Lara Croft");
+  EXPECT_TRUE(meetings.empty());
+
+  // success
+  EXPECT_TRUE(service->quitMeeting("Naked Snake", meeting2.getTitle()));
+  // no participator, should be deleted
+  meetings = service->listAllMeetings("Geralt of Rivia");
+  ASSERT_TRUE(meetings.empty());
+
+  // already deleted here
+  // ASSERT_TRUE(service->deleteMeeting(meeting2.getSponsor(),
+  // meeting2.getTitle()));
+}
+
+/*
  *  Test meetingQuery() method
  */
 TEST_F(AgendaServiceTest, MeetingQuery) {
@@ -432,6 +715,27 @@ TEST_F(AgendaServiceTest, MeetingQuery) {
     ASSERT_FALSE(service->meetingQuery(meeting.getSponsor(), meeting.getTitle())
                      .empty());
   }
+
+  //  Invalid start date string (format)
+  EXPECT_TRUE(service
+                  ->meetingQuery(meeting5.getSponsor(), "2019-7-10/15:00",
+                                 "2019-07-10/19:00")
+                  .empty());
+  //  Invalid end date string (format)
+  EXPECT_TRUE(service
+                  ->meetingQuery(meeting5.getSponsor(), "2019-07-10/15:00",
+                                 "2019-7-10/19:00")
+                  .empty());
+  //  Invalid start date string (logic)
+  EXPECT_TRUE(service
+                  ->meetingQuery(meeting5.getSponsor(), "1900-02-29/15:00",
+                                 "2019-07-10/15:00")
+                  .empty());
+  //  Invalid end date string (logic)
+  EXPECT_TRUE(service
+                  ->meetingQuery(meeting5.getSponsor(), "2019-07-10/15:00",
+                                 "2100-02-29/15:00")
+                  .empty());
   //  Query with user's name and time interval
   //  Current users
   //  0. Lara 1. Geralt 2.Snake 3. Trevor

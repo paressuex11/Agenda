@@ -91,3 +91,15 @@ TEST(MeetingTest, IsParticipatorCheck) {
   EXPECT_TRUE(meeting.isParticipator("Par_B"));
   EXPECT_FALSE(meeting.isParticipator("Par_C"));
 }
+
+/*
+ *  Test add or remove participators in the meeting
+ */
+TEST(MeetingTest, AddAndRemoveParticipator) {
+  EXPECT_TRUE(meeting.isParticipator("Par_A"));
+  meeting.removeParticipator("Par_A");
+  meeting.removeParticipator("Par_A");
+  EXPECT_FALSE(meeting.isParticipator("Par_A"));
+  meeting.addParticipator("Par_A");
+  EXPECT_TRUE(meeting.isParticipator("Par_A"));
+}

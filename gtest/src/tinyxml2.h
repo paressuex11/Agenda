@@ -1171,8 +1171,8 @@ class TINYXML2_LIB XMLElement : public XMLNode {
 
       @verbatim
       int value = 10;
-      QueryIntAttribute( "foo", &value );		// if "foo" isn't found, value will
-     still be 10
+      QueryIntAttribute( "foo", &value );		// if "foo" isn't found, value
+     will still be 10
       @endverbatim
   */
   XMLError QueryIntAttribute(const char* name, int* value) const {
@@ -1234,6 +1234,7 @@ class TINYXML2_LIB XMLElement : public XMLNode {
               QueryIntAttribute() and related functions.
               
 
+
               If successful, the result of the conversion
       will be written to 'value'. If not successful, nothing will
       be written to 'value'. This allows you to provide default
@@ -1241,8 +1242,8 @@ class TINYXML2_LIB XMLElement : public XMLNode {
 
       @verbatim
       int value = 10;
-      QueryAttribute( "foo", &value );		// if "foo" isn't found, value will
-     still be 10
+      QueryAttribute( "foo", &value );		// if "foo" isn't found, value
+     will still be 10
       @endverbatim
   */
   int QueryAttribute(const char* name, int* value) const {
@@ -1374,6 +1375,7 @@ class TINYXML2_LIB XMLElement : public XMLNode {
               <foo>Hullaballoo!<b>This is text</b></foo>
       @endverbatim
               
+
 
               For this XML:
       @verbatim
@@ -1526,6 +1528,7 @@ class TINYXML2_LIB XMLDocument : public XMLNode {
       Load an XML file from disk. You are responsible
       for providing and closing the FILE*.
    
+
 
       NOTE: The file should be opened as binary ("rb")
       not text in order for TinyXML-2 to correctly
