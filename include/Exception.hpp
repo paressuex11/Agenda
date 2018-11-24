@@ -21,7 +21,7 @@ class wrong_format : public my_exception {
  public:
   wrong_format(const std::string &msg = "") : my_exception(msg){};
 
-  virtual std::string type() const { return "Wrong Error"; }
+  virtual std::string type() const { return "Wrong Format"; }
 };
 
 class invalid_date : public my_exception {

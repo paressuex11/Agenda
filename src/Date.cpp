@@ -147,7 +147,7 @@ Date Date::stringToDate(const string &t_dateString) {
   std::smatch result;
 
   if (!std::regex_match(t_dateString, result, pattern))
-    throw wrong_format(t_dateString);
+    throw wrong_format("Date: " + t_dateString);
 
   Date ret(stoi(result[1]), stoi(result[2]), stoi(result[3]), stoi(result[4]),
            stoi(result[5]));
