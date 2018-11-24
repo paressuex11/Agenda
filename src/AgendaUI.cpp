@@ -167,6 +167,7 @@ void AgendaUI::OperationLoop() {
 
       if (!this->executeOperation(operation)) break;
     } catch (const my_exception &e) {
+      this->m_logger->log_error(e);
       cerr << endl << '[' << e.type() << "] " << e.what() << endl << endl;
     }
   }
@@ -178,6 +179,8 @@ void AgendaUI::OperationLoop() {
 void AgendaUI::startAgenda() {
   system("clear");
   printManual(false);
+  this->m_logger = Logger::get_instance();
+  this->m_logger->log_start();
 }
 
 /**
@@ -212,7 +215,7 @@ bool AgendaUI::executeOperation(string t_operation) {
     checkLoginState(false, IS_LOG_IN, t_operation);
     this->userRegister();
   } else if (t_operation == "q") {
-    this->quitAgenda();
+    this->quitAgenda(0);
   } else if (t_operation == "o") {
     checkLoginState(true, IS_LOG_IN, t_operation);
     this->userLogOut();
@@ -277,9 +280,11 @@ void AgendaUI::userLogIn() {
 
   vector<string> arguments = getArguments(2, prompt);
 
+  this->m_logger->log_start(Logger::login, arguments[0]);
   this->m_agendaService.userLogIn(arguments[0], arguments[1]);
   this->m_userName = arguments[0];
   this->m_userPassword = arguments[1];
+  this->m_logger->log_success();
   printPrompt(prompt) << "succeed!" << endl << endl;
   printManual(true);
 }
@@ -296,12 +301,12 @@ void AgendaUI::userRegister() {
 
   vector<string> arguments = getArguments(4, prompt);
 
+  this->m_logger->log_start(Logger::createUser, arguments[0]);
   this->m_agendaService.userRegister(arguments[0], arguments[1], arguments[2],
                                      arguments[3]);
-  this->m_userName = arguments[0];
-  this->m_userPassword = arguments[1];
+  this->m_logger->log_success();
   printPrompt(prompt) << "succeed!" << endl << endl;
-  printManual(true);
+  printManual(false);
 }
 
 /**
@@ -310,6 +315,7 @@ void AgendaUI::userRegister() {
 void AgendaUI::userLogOut() {
   this->m_userName = "";
   this->m_userPassword = "";
+  this->m_logger->log_out();
   cout << endl;
   printManual(false);
 }
@@ -317,7 +323,11 @@ void AgendaUI::userLogOut() {
 /**
  * quit the Agenda
  */
-void AgendaUI::quitAgenda() { exit(0); }
+void AgendaUI::quitAgenda(int error) {
+  if (IS_LOG_IN) this->m_logger->log_out();
+  this->m_logger->log_exit(error);
+  exit(0);
+}
 
 /**
  * delete a user from storage
@@ -325,9 +335,11 @@ void AgendaUI::quitAgenda() { exit(0); }
 void AgendaUI::deleteUser() {
   string prompt = "delete agenda account";
 
+  this->m_logger->log_start(Logger::deleteUser);
   this->m_agendaService.deleteUser(this->m_userName, this->m_userPassword);
   this->m_userName = "";
   this->m_userPassword = "";
+  this->m_logger->log_success();
   cout << endl;
   printPrompt(prompt) << "succeed!" << endl << endl;
 }
@@ -466,9 +478,12 @@ void AgendaUI::quitMeeting() {
 void AgendaUI::listAllMeetings() {
   cout << endl;
   printPrompt("list all meetings") << endl << endl;
+  this->m_logger->log_start(Logger::listMeeting);
 
   list<Meeting> meetingList =
       this->m_agendaService.listAllMeetings(this->m_userName);
+
+  this->m_logger->log_success(meetingList.size());
 
   if (meetingList.empty()) {
     cout << "None" << endl << endl;
@@ -485,8 +500,12 @@ void AgendaUI::listAllSponsorMeetings() {
   cout << endl;
   printPrompt("list all sponsor meetings") << endl << endl;
 
+  this->m_logger->log_start(Logger::listBySpon);
+
   list<Meeting> meetingList =
       this->m_agendaService.listAllSponsorMeetings(this->m_userName);
+
+  this->m_logger->log_success(meetingList.size());
 
   if (meetingList.empty()) {
     cout << "None" << endl << endl;
@@ -503,8 +522,12 @@ void AgendaUI::listAllParticipateMeetings() {
   cout << endl;
   printPrompt("list all participator meetings") << endl << endl;
 
+  this->m_logger->log_start(Logger::listByPart);
+
   list<Meeting> meetingList =
       this->m_agendaService.listAllParticipateMeetings(this->m_userName);
+
+  this->m_logger->log_success(meetingList.size());
 
   if (meetingList.empty()) {
     cout << "None" << endl << endl;
@@ -526,8 +549,12 @@ void AgendaUI::queryMeetingByTitle() {
 
   vector<string> arguments = getArguments(1, prompt);
 
+  this->m_logger->log_start(Logger::queryMeeting, arguments[0]);
+
   list<Meeting> meetingList =
       this->m_agendaService.meetingQuery(this->m_userName, arguments[0]);
+
+  this->m_logger->log_success(meetingList.size());
 
   if (meetingList.empty()) {
     cout << "None" << endl << endl;
@@ -550,8 +577,12 @@ void AgendaUI::queryMeetingByTimeInterval() {
 
   vector<string> arguments = getArguments(2, prompt);
 
+  this->m_logger->log_start(Logger::queryMeeting, arguments[0], arguments[1]);
+
   list<Meeting> meetingList = this->m_agendaService.meetingQuery(
       this->m_userName, arguments[0], arguments[1]);
+
+  this->m_logger->log_success(meetingList.size());
 
   if (meetingList.empty()) {
     cout << "None" << endl << endl;
@@ -574,7 +605,9 @@ void AgendaUI::deleteMeetingByTitle() {
 
   vector<string> arguments = getArguments(1, prompt);
 
+  this->m_logger->log_start(Logger::deleteMeeting, arguments[0]);
   this->m_agendaService.deleteMeeting(this->m_userName, arguments[0]);
+  this->m_logger->log_success();
   printPrompt(prompt) << "succeed!" << endl << endl;
 }
 
@@ -583,7 +616,9 @@ void AgendaUI::deleteMeetingByTitle() {
  */
 void AgendaUI::deleteAllMeetings() {
   cout << endl;
+  this->m_logger->log_start(Logger::deleteMeeting);
   this->m_agendaService.deleteAllMeetings(this->m_userName);
+  this->m_logger->log_success();
   printPrompt("delete all meetings") << "succeed!" << endl << endl;
 }
 

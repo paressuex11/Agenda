@@ -7,7 +7,7 @@ void sig_int(int signal) {
   std::cout << std::endl
             << "SIGINT received." << std::endl
             << "All changes are saved." << std::endl;
-  agenda.quitAgenda();
+  agenda.quitAgenda(1);
 }
 
 int main() {

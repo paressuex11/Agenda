@@ -12,6 +12,11 @@ class Path {
    * meeting.csv path
    */
   static const char *meetingPath;
+
+  /**
+   * log.txt path
+   */
+  static const char *logPath;
 };
 
 #endif

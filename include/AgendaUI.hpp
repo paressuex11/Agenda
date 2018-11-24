@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include "AgendaService.hpp"
+#include "Logger.hpp"
 
 class AgendaUI {
  public:
@@ -13,7 +14,7 @@ class AgendaUI {
   /**
    * quit the Agenda
    */
-  void quitAgenda();
+  void quitAgenda(int error);
 
  private:
   /**
@@ -121,6 +122,7 @@ class AgendaUI {
   std::string m_userName;
   std::string m_userPassword;
   AgendaService m_agendaService;
+  std::shared_ptr<Logger> m_logger;
 };
 
 #endif
