@@ -1,6 +1,7 @@
 #include "Date.hpp"
 #include <regex>
 #include <vector>
+#include "Exception.hpp"
 
 using std::stoi;
 using std::string;
@@ -146,12 +147,12 @@ Date Date::stringToDate(const string &t_dateString) {
   std::smatch result;
 
   if (!std::regex_match(t_dateString, result, pattern))
-    return Date(0, 0, 0, 0, 0);
+    throw wrong_format(t_dateString);
 
   Date ret(stoi(result[1]), stoi(result[2]), stoi(result[3]), stoi(result[4]),
            stoi(result[5]));
 
-  if (!isValid(ret)) return Date(0, 0, 0, 0, 0);
+  if (!isValid(ret)) throw invalid_date(t_dateString);
 
   return ret;
 }
@@ -161,12 +162,12 @@ Date Date::stringToDate(const string &t_dateString) {
  * 0000-00-00/00:00
  */
 string Date::dateToString(const Date &t_date) {
-  if (!isValid(t_date)) return "0000-00-00/00:00";
-
   string result =
       to_string(t_date.m_year) + '-' + formatString(t_date.m_month) + '-' +
       formatString(t_date.m_day) + '/' + formatString(t_date.m_hour) + ':' +
       formatString(t_date.m_minute);
+
+  if (!isValid(t_date)) throw invalid_date(result);
 
   return result;
 }

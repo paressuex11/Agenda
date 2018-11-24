@@ -1,6 +1,7 @@
 #include "Storage.hpp"
 #include <fstream>  // ifstream ostream
 #include <regex>    // reges expression
+#include "Exception.hpp"
 #include "Path.hpp"
 
 using std::function;
@@ -33,7 +34,8 @@ bool Storage::readFromFile(void) {
   std::regex userCSVPattern("^\"(.+)\",\"(.+)\",\"(.+)\",\"(.+)\"$");
 
   for (string line; std::getline(userStream, line);) {
-    if (!std::regex_match(line, result, userCSVPattern)) return false;
+    if (!std::regex_match(line, result, userCSVPattern))
+      throw wrong_format("Wrong User CSV Format");
 
     this->m_userList.push_back(
         User(result[1], result[2], result[3], result[4]));
@@ -46,7 +48,8 @@ bool Storage::readFromFile(void) {
       "^\"(.+)\",\"(.+)\",\"(.+)\",\"(.+)\",\"(.+)\"$");
 
   for (string line; std::getline(meetingStream, line);) {
-    if (!std::regex_match(line, result, meetingCSVPattern)) return false;
+    if (!std::regex_match(line, result, meetingCSVPattern))
+      throw wrong_format("Wrong Meeting CSV Format");
 
     Meeting t_meeting;
 

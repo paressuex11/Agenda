@@ -169,10 +169,7 @@ void AgendaUI::OperationLoop() {
 
       if (!this->executeOperation(operation)) break;
     } catch (const my_exception &e) {
-      cerr << endl
-           << '[' << e.type() << "] " << e.what()
-           << " (press h for command help)" << endl
-           << endl;
+      cerr << endl << '[' << e.type() << "] " << e.what() << endl << endl;
     }
   }
 }

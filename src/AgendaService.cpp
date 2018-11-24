@@ -1,5 +1,6 @@
 #include "AgendaService.hpp"
 #include <algorithm>
+#include "Exception.hpp"
 
 using std::find;
 using std::list;
@@ -27,7 +28,10 @@ bool AgendaService::userLogIn(const string &userName, const string &password) {
     return u.getName() == userName && u.getPassword() == password;
   };
 
-  return !this->m_storage->queryUser(filter).empty();
+  if (this->m_storage->queryUser(filter).empty())
+    throw user_not_found("User: " + userName);
+
+  return true;
 }
 
 /**
@@ -44,7 +48,8 @@ bool AgendaService::userRegister(const string &userName, const string &password,
     return u.getName() == userName;
   };
 
-  if (!this->m_storage->queryUser(filter).empty()) return false;
+  if (!this->m_storage->queryUser(filter).empty())
+    throw user_repeat("Username: " + userName + " is taken by others");
 
   this->m_storage->createUser(User(userName, password, email, phone));
 
@@ -62,7 +67,8 @@ bool AgendaService::deleteUser(const string &userName, const string &password) {
     return u.getName() == userName && u.getPassword() == password;
   };
 
-  if (this->m_storage->deleteUser(filterUserExist) == 0) return false;
+  if (this->m_storage->deleteUser(filterUserExist) == 0)
+    throw user_not_found("User: " + userName);
 
   this->m_storage->updateMeeting(
       [&userName](const Meeting &m) -> bool {
@@ -103,19 +109,25 @@ bool AgendaService::createMeeting(const string &userName, const string &title,
   Date eDate = Date::stringToDate(endDate);
 
   // check if dates valid
-  if (!Date::isValid(sDate) || !Date::isValid(eDate) || sDate >= eDate)
-    return false;
+  if (!Date::isValid(sDate)) throw invalid_date("Start date: " + startDate);
+
+  if (!Date::isValid(eDate)) throw invalid_date("End date: " + endDate);
+
+  if (sDate >= eDate)
+    throw invalid_date("Start date must be earlier than end date");
 
   auto filterSponsorExist = [&userName](const User &u) -> bool {
     return u.getName() == userName;
   };
 
   // check if sponsor exists
-  if (this->m_storage->queryUser(filterSponsorExist).empty()) return false;
+  if (this->m_storage->queryUser(filterSponsorExist).empty())
+    throw user_not_found("Sponsor: " + userName);
 
   for (auto it = participator.begin(); it != participator.end(); it++) {
     // check if sponsor is one of participators
-    if (userName == *it) return false;
+    if (userName == *it)
+      throw user_repeat("Sponsor: " + userName + " is found in participators");
 
     string part = *it;
 
@@ -125,45 +137,60 @@ bool AgendaService::createMeeting(const string &userName, const string &title,
 
     // check if participator exists
     if (this->m_storage->queryUser(filterParticipatorExist).empty())
-      return false;
+      throw user_not_found("Participator: " + *it);
 
     // check if participator repeats
     for (auto itInner = participator.begin(); itInner != it; itInner++) {
-      if (*itInner == *it) return false;
+      if (*itInner == *it)
+        throw user_repeat("Participator: " + *it + " appears more than once");
     }
   }
 
   auto filterOverlapAndBusy = [&userName, &title, &sDate, &eDate,
                                &participator](const Meeting &m) -> bool {
     // check if title is repeated
-    if (m.getTitle() == title) return true;
+    if (m.getTitle() == title)
+      throw title_repeat("Meeting sponsored by " + m.getSponsor() +
+                         " has a same title");
 
     // check if sponsor is busy
     if (m.getSponsor() == userName || m.isParticipator(userName)) {
-      if (m.getStartDate() <= sDate && m.getEndDate() > sDate) return true;
+      bool isBusy = false;
 
-      if (m.getStartDate() < eDate && m.getEndDate() >= eDate) return true;
+      if (m.getStartDate() <= sDate && m.getEndDate() > sDate) isBusy = true;
 
-      if (m.getStartDate() >= sDate && m.getEndDate() <= eDate) return true;
+      if (m.getStartDate() < eDate && m.getEndDate() >= eDate) isBusy = true;
+
+      if (m.getStartDate() >= sDate && m.getEndDate() <= eDate) isBusy = true;
+
+      if (isBusy)
+        throw time_conflict("Sponsor: " + userName + " is busy from " +
+                            Date::dateToString(m.getStartDate()) + " to " +
+                            Date::dateToString(m.getEndDate()));
     }
 
     // check if any participator is busy
     for (const string &part : participator) {
       if (m.getSponsor() == part || m.isParticipator(part)) {
-        if (m.getStartDate() <= sDate && m.getEndDate() > sDate) return true;
+        bool isBusy = false;
 
-        if (m.getStartDate() < eDate && m.getEndDate() >= eDate) return true;
+        if (m.getStartDate() <= sDate && m.getEndDate() > sDate) isBusy = true;
 
-        if (m.getStartDate() >= sDate && m.getEndDate() <= eDate) return true;
+        if (m.getStartDate() < eDate && m.getEndDate() >= eDate) isBusy = true;
+
+        if (m.getStartDate() >= sDate && m.getEndDate() <= eDate) isBusy = true;
+
+        if (isBusy)
+          throw time_conflict("Participator: " + part + " is busy from " +
+                              Date::dateToString(m.getStartDate()) + " to " +
+                              Date::dateToString(m.getEndDate()));
       }
     }
 
     return false;
   };
 
-  if (!this->m_storage->queryMeeting(filterOverlapAndBusy).empty())
-    return false;
-
+  this->m_storage->queryMeeting(filterOverlapAndBusy);
   this->m_storage->createMeeting(
       Meeting(userName, (participator), startDate, endDate, title));
 
@@ -181,38 +208,46 @@ bool AgendaService::addMeetingParticipator(const std::string &userName,
                                            const std::string &title,
                                            const std::string &participator) {
   auto filterMeetingExist = [&userName, &title](const Meeting &m) -> bool {
-    if (m.getSponsor() == userName && m.getTitle() == title) return true;
+    if (m.getTitle() == title && m.getSponsor() == userName) return true;
     return false;
   };
   auto meetings = this->m_storage->queryMeeting(filterMeetingExist);
 
-  if (meetings.empty()) return false;
+  if (meetings.empty())
+    throw meeting_not_found("Title: " + title + ". Sponsor: " + userName);
 
   auto filterParticipatorExist = [&participator](const User &u) -> bool {
     return u.getName() == participator;
   };
 
-  if (this->m_storage->queryUser(filterParticipatorExist).empty()) return false;
+  if (this->m_storage->queryUser(filterParticipatorExist).empty())
+    throw user_not_found("Participator: " + participator);
 
   auto meeting = meetings.front();
   auto filterOverlap = [&participator, &meeting](const Meeting &m) -> bool {
     if (m.getSponsor() == participator || m.isParticipator(participator)) {
+      bool isBusy = false;
+
       if (m.getStartDate() <= meeting.getStartDate() &&
           m.getEndDate() > meeting.getStartDate())
-        return true;
+        isBusy = true;
       if (m.getStartDate() < meeting.getEndDate() &&
           m.getEndDate() >= meeting.getEndDate())
-        return true;
+        isBusy = true;
       if (m.getStartDate() >= meeting.getStartDate() &&
           m.getEndDate() <= meeting.getEndDate())
-        return true;
+        isBusy = true;
+
+      if (isBusy)
+        throw time_conflict("Participator: " + participator + " is busy from " +
+                            Date::dateToString(m.getStartDate()) + " to " +
+                            Date::dateToString(m.getEndDate()));
     }
 
     return false;
   };
 
-  if (!this->m_storage->queryMeeting(filterOverlap).empty()) return false;
-
+  this->m_storage->queryMeeting(filterOverlap);
   this->m_storage->updateMeeting(
       [&meeting](const Meeting &m) {
         return m.getTitle() == meeting.getTitle();
@@ -233,12 +268,13 @@ bool AgendaService::removeMeetingParticipator(const std::string &userName,
                                               const std::string &title,
                                               const std::string &participator) {
   auto filterMeetingExist = [&userName, &title](const Meeting &m) -> bool {
-    if (m.getSponsor() == userName && m.getTitle() == title) return true;
+    if (m.getTitle() == title && m.getSponsor() == userName) return true;
     return false;
   };
   auto meetings = this->m_storage->queryMeeting(filterMeetingExist);
 
-  if (meetings.empty()) return false;
+  if (meetings.empty())
+    throw meeting_not_found("Title: " + title + ". Sponsor: " + userName);
 
   auto filterParticipatorExist = [&participator](const User &u) -> bool {
     return u.getName() == participator;
@@ -249,7 +285,7 @@ bool AgendaService::removeMeetingParticipator(const std::string &userName,
 
   if (find(participators.begin(), participators.end(), participator) ==
       participators.end())
-    return false;
+    throw user_not_found("Participator: " + participator);
 
   this->m_storage->updateMeeting(
       [&meeting](const Meeting &m) {
@@ -279,7 +315,8 @@ bool AgendaService::quitMeeting(const std::string &userName,
   auto meetings = this->m_storage->queryMeeting(filterMeetingExist);
 
   // check if meeting exists
-  if (meetings.empty()) return false;
+  if (meetings.empty())
+    throw meeting_not_found("Title: " + title + ". Participator: " + userName);
 
   Meeting meeting = meetings.front();
 
@@ -326,8 +363,12 @@ list<Meeting> AgendaService::meetingQuery(const string &userName,
 
   list<Meeting> listMeeting;
 
-  if (!Date::isValid(sDate) || !Date::isValid(eDate) || sDate > eDate)
-    return listMeeting;
+  if (!Date::isValid(sDate)) throw invalid_date("Start date: " + startDate);
+
+  if (!Date::isValid(eDate)) throw invalid_date("End date: " + endDate);
+
+  if (sDate > eDate)
+    throw invalid_date("Start date must be earlier than end date");
 
   auto filter = [&userName, &sDate, &eDate](const Meeting &m) -> bool {
     return !(eDate < m.getStartDate() || sDate > m.getEndDate()) &&
@@ -389,7 +430,11 @@ bool AgendaService::deleteMeeting(const string &userName, const string &title) {
     return m.getSponsor() == userName && m.getTitle() == title;
   };
 
-  return this->m_storage->deleteMeeting(filter) != 0;
+  if (this->m_storage->deleteMeeting(filter) == 0)
+    throw empty_deletion("No meeting found. Title: " + title +
+                         ". Sponsor: " + userName);
+
+  return true;
 }
 
 /**
@@ -402,7 +447,10 @@ bool AgendaService::deleteAllMeetings(const string &userName) {
     return m.getSponsor() == userName;
   };
 
-  return this->m_storage->deleteMeeting(filter) != 0;
+  if (this->m_storage->deleteMeeting(filter) == 0)
+    throw empty_deletion("No meeting found. Sponsor: " + userName);
+
+  return true;
 }
 
 /**
