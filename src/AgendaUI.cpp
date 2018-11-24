@@ -52,14 +52,12 @@ void printManual(bool isLoggedIn) {
 
 std::ostream &printPrompt(const string &data) {
   cout << "[" + data + "] ";
+
   return cout;
 }
 
 void printFormat(std::initializer_list<string> format) {
-  for (const auto &item : format) {
-    printPrompt(item);
-  }
-
+  for (const auto &item : format) printPrompt(item);
   cout << endl;
 }
 
@@ -96,7 +94,7 @@ int tokenize(const string &line, vector<string> &dest) {
 
     dest.push_back(line.substr(start, bound - start));
 
-    for (start = bound; start < line.size() and line[start] == ' '; ++start)
+    for (start = bound; start < line.size() && line[start] == ' '; ++start)
       ;
 
     if (start == line.size()) break;
@@ -278,17 +276,12 @@ void AgendaUI::userLogIn() {
   printFormat({"username", "password"});
 
   vector<string> arguments = getArguments(2, prompt);
-  bool result = this->m_agendaService.userLogIn(arguments[0], arguments[1]);
 
-  if (result) {
-    this->m_userName = arguments[0];
-    this->m_userPassword = arguments[1];
-    printPrompt(prompt) << "succeed!" << endl << endl;
-    printManual(true);
-  } else {
-    printPrompt(prompt) << "Password error or user doesn't exist" << endl
-                        << endl;
-  }
+  this->m_agendaService.userLogIn(arguments[0], arguments[1]);
+  this->m_userName = arguments[0];
+  this->m_userPassword = arguments[1];
+  printPrompt(prompt) << "succeed!" << endl << endl;
+  printManual(true);
 }
 
 /**
@@ -303,17 +296,12 @@ void AgendaUI::userRegister() {
 
   vector<string> arguments = getArguments(4, prompt);
 
-  bool result = this->m_agendaService.userRegister(arguments[0], arguments[1],
-                                                   arguments[2], arguments[3]);
-
-  if (result) {
-    this->m_userName = arguments[0];
-    this->m_userPassword = arguments[1];
-    printPrompt(prompt) << "succeed!" << endl << endl;
-    printManual(true);
-  } else {
-    printPrompt(prompt) << "This username has been registered!" << endl << endl;
-  }
+  this->m_agendaService.userRegister(arguments[0], arguments[1], arguments[2],
+                                     arguments[3]);
+  this->m_userName = arguments[0];
+  this->m_userPassword = arguments[1];
+  printPrompt(prompt) << "succeed!" << endl << endl;
+  printManual(true);
 }
 
 /**
@@ -336,17 +324,12 @@ void AgendaUI::quitAgenda() { exit(0); }
  */
 void AgendaUI::deleteUser() {
   string prompt = "delete agenda account";
-  bool result =
-      this->m_agendaService.deleteUser(this->m_userName, this->m_userPassword);
 
-  if (result) {
-    this->m_userName = "";
-    this->m_userPassword = "";
-    cout << endl;
-    printPrompt(prompt) << "succeed!" << endl << endl;
-  } else {
-    printPrompt(prompt) << "error!" << endl << endl;
-  }
+  this->m_agendaService.deleteUser(this->m_userName, this->m_userPassword);
+  this->m_userName = "";
+  this->m_userPassword = "";
+  cout << endl;
+  printPrompt(prompt) << "succeed!" << endl << endl;
 }
 
 /**
@@ -420,15 +403,11 @@ void AgendaUI::createMeeting() {
       {"title", "start time(yyyy-mm-dd/hh:mm)", "end time(yyyy-mm-dd/hh:mm)"});
 
   vector<string> arguments = getArguments(3, prompt);
-  bool result = this->m_agendaService.createMeeting(
-      this->m_userName, arguments[0], arguments[1], arguments[2],
-      participators);
 
-  if (result) {
-    printPrompt(prompt) << "succeed!" << endl << endl;
-  } else {
-    printPrompt(prompt) << "error!" << endl << endl;
-  }
+  this->m_agendaService.createMeeting(this->m_userName, arguments[0],
+                                      arguments[1], arguments[2],
+                                      participators);
+  printPrompt(prompt) << "succeed!" << endl << endl;
 }
 
 /**
@@ -442,14 +421,10 @@ void AgendaUI::addMeetingParticipator() {
   printFormat({"meeting title", "participator username"});
 
   vector<string> arguments = getArguments(2, prompt);
-  bool result = this->m_agendaService.addMeetingParticipator(
-      this->m_userName, arguments[0], arguments[1]);
 
-  if (result) {
-    printPrompt(prompt) << "succeed!" << endl << endl;
-  } else {
-    printPrompt(prompt) << "error!" << endl << endl;
-  }
+  this->m_agendaService.addMeetingParticipator(this->m_userName, arguments[0],
+                                               arguments[1]);
+  printPrompt(prompt) << "succeed!" << endl << endl;
 }
 
 /**
@@ -463,14 +438,10 @@ void AgendaUI::removeMeetingParticipator() {
   printFormat({"meeting title", "participator username"});
 
   vector<string> arguments = getArguments(2, prompt);
-  bool result = this->m_agendaService.removeMeetingParticipator(
-      this->m_userName, arguments[0], arguments[1]);
 
-  if (result) {
-    printPrompt(prompt) << "succeed!" << endl << endl;
-  } else {
-    printPrompt(prompt) << "error!" << endl << endl;
-  }
+  this->m_agendaService.removeMeetingParticipator(this->m_userName,
+                                                  arguments[0], arguments[1]);
+  printPrompt(prompt) << "succeed!" << endl << endl;
 }
 
 /**
@@ -484,14 +455,9 @@ void AgendaUI::quitMeeting() {
   printFormat({"meeting title"});
 
   vector<string> arguments = getArguments(1, prompt);
-  bool result =
-      this->m_agendaService.quitMeeting(this->m_userName, arguments[0]);
 
-  if (result) {
-    printPrompt(prompt) << "succeed!" << endl << endl;
-  } else {
-    printPrompt(prompt) << "error!" << endl << endl;
-  }
+  this->m_agendaService.quitMeeting(this->m_userName, arguments[0]);
+  printPrompt(prompt) << "succeed!" << endl << endl;
 }
 
 /**
@@ -608,14 +574,8 @@ void AgendaUI::deleteMeetingByTitle() {
 
   vector<string> arguments = getArguments(1, prompt);
 
-  bool result =
-      this->m_agendaService.deleteMeeting(this->m_userName, arguments[0]);
-
-  if (result) {
-    printPrompt(prompt) << "succeed!" << endl << endl;
-  } else {
-    printPrompt(prompt) << "error!" << endl << endl;
-  }
+  this->m_agendaService.deleteMeeting(this->m_userName, arguments[0]);
+  printPrompt(prompt) << "succeed!" << endl << endl;
 }
 
 /**
