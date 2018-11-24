@@ -1,5 +1,5 @@
-#ifndef USER_H
-#define USER_H
+#ifndef USER_HPP_
+#define USER_HPP_
 
 #include <initializer_list>
 #include <string>

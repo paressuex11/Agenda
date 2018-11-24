@@ -1,5 +1,5 @@
-#ifndef MEETING_H
-#define MEETING_H
+#ifndef MEETING_HPP_
+#define MEETING_HPP_
 
 #include <vector>
 #include "Date.hpp"

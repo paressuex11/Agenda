@@ -1,5 +1,5 @@
-#ifndef AGENDAUI_H
-#define AGENDAUI_H
+#ifndef AGENDA_UI_HPP_
+#define AGENDA_UI_HPP_
 
 #include <iostream>
 #include <string>

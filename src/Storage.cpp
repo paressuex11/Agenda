@@ -2,13 +2,15 @@
 #include <fstream>  // ifstream ostream
 #include <regex>    // reges expression
 #include "Exception.hpp"
-#include "Path.hpp"
 
 using std::function;
 using std::list;
 using std::string;
 
 std::shared_ptr<Storage> Storage::m_instance = nullptr;
+
+const char *Path::userPath = "data/users.csv";
+const char *Path::meetingPath = "data/meetings.csv";
 
 /**
  *  default constructor

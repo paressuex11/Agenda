@@ -1,5 +1,5 @@
-#ifndef PATH_HPP
-#define PATH_HPP
+#ifndef PATH_HPP_
+#define PATH_HPP_
 
 class Path {
  public:
@@ -13,8 +13,5 @@ class Path {
    */
   static const char *meetingPath;
 };
-
-const char *Path::meetingPath = "data/meetings.csv";
-const char *Path::userPath = "data/users.csv";
 
 #endif

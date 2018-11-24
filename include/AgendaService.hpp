@@ -1,5 +1,5 @@
-#ifndef AGENDASERVICE_H
-#define AGENDASERVICE_H
+#ifndef AGENDA_SERVICE_HPP_
+#define AGENDA_SERVICE_HPP_
 
 #include <list>
 #include <string>

@@ -1,5 +1,5 @@
-#ifndef DATE_H
-#define DATE_H
+#ifndef DATE_HPP_
+#define DATE_HPP_
 
 #include <initializer_list>
 #include <string>

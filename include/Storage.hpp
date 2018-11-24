@@ -1,11 +1,12 @@
-#ifndef AGENDA_STORAGE_H
-#define AGENDA_STORAGE_H
+#ifndef AGENDA_STORAGE_HPP_
+#define AGENDA_STORAGE_HPP_
 
 #include <functional>
 #include <list>
 #include <memory>
 #include <string>
 #include "Meeting.hpp"
+#include "Path.hpp"
 #include "User.hpp"
 
 class Storage {
